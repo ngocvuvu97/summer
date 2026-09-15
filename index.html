@@ -5,14 +5,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#17233c">
-    <title>Hand bài</title>
+    <title>Bảng điểm Hand bài</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
     <main class="app-shell">
-        <h1 class="app-title">Hand bài</h1>
-        <button class="new-session-button" id="new-session" type="button">Ván mới</button>
+        <header class="app-header">
+            <h1 class="app-title">Summer Power P207</h1>
+        </header>
+        <div class="action-bar" aria-label="Thao tác nhanh">
+            <button class="action-button clear-session-button" id="clear-session" type="button">
+                <span class="action-icon clear-icon" aria-hidden="true"></span>
+                <span>Clear buổi chơi</span>
+            </button>
+            <button class="action-button add-member-button" id="add-player" type="button">
+                <span class="action-icon member-icon" aria-hidden="true"></span>
+                <span>Thêm mem</span>
+            </button>
+            <button class="action-button new-round-button" id="new-round" type="button">
+                <span class="action-icon plus-icon" aria-hidden="true"></span>
+                <span>Ván mới</span>
+            </button>
+        </div>
         <section class="scoreboard" aria-label="Bảng điểm">
             <div class="table-wrap">
                 <div class="score-table" id="score-table"></div>

@@ -1,8 +1,11 @@
 const STORAGE_KEY = "hand-bai-session-v1";
 const DEFAULT_PLAYERS = ["Mem1", "Mem2", "Mem3", "Mem4"];
 const MAX_SCORE = 999;
+const PLAYER_COLUMN_MIN_WIDTH = 76;
 
 let state = loadState();
+let activePlayerId = null;
+let roundModal = null;
 
 function createSession() {
     return {
@@ -34,10 +37,6 @@ function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function formatDate(value) {
-    return new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(value));
-}
-
 function scoreValue(value) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
@@ -67,6 +66,7 @@ function render() {
     const table = document.querySelector("#score-table");
     const accumulated = totals();
     table.style.setProperty("--players", state.players.length);
+    table.style.setProperty("--table-min-width", `${state.players.length * PLAYER_COLUMN_MIN_WIDTH}px`);
 
     const header = document.createElement("div");
     header.className = "score-row score-header";
@@ -80,18 +80,7 @@ function render() {
         cell.append(total);
         header.append(cell);
     });
-    const addCell = document.createElement("div");
-    addCell.className = "score-cell";
-    const addButton = document.createElement("button");
-    addButton.className = "add-player";
-    addButton.type = "button";
-    addButton.title = "Thêm người chơi";
-    addButton.setAttribute("aria-label", "Thêm người chơi");
-    addButton.textContent = "+";
-    addButton.addEventListener("click", addPlayer);
-    addCell.append(addButton);
-    header.append(addCell);
-    table.replaceChildren(header, createDraftRow(), ...state.rows.map((row) => createConfirmedRow(row)));
+    table.replaceChildren(header, ...state.rows.map((row) => createConfirmedRow(row)));
 }
 
 function createPlayerControl(player) {
@@ -129,83 +118,137 @@ function startNameEdit(wrapper, player) {
     });
 }
 
-function createDraftRow() {
-    const total = rowTotal(state.draft.values);
-    const row = document.createElement("div");
-    row.className = `score-row draft ${total !== 0 ? "unbalanced" : ""}`;
-    state.players.forEach((player) => row.append(createScoreCell(player, state.draft.values, false)));
-    const confirmCell = document.createElement("div");
-    confirmCell.className = "score-cell confirm-cell";
-    const confirm = document.createElement("button");
-    confirm.className = "confirm-button";
-    confirm.type = "button";
-    confirm.textContent = "OK";
-    confirm.disabled = total !== 0 || !rowHasScore(state.draft.values);
-    confirm.title = confirm.disabled ? "Cần một ván có tổng bằng 0" : "Xác nhận ván";
-    confirm.addEventListener("click", confirmDraft);
-    confirmCell.append(confirm);
-    row.append(confirmCell);
-    return row;
-}
-
-function createScoreCell(player, values, locked) {
+function createScoreCell(player, values) {
     const cell = document.createElement("div");
     cell.className = "score-cell";
-    const input = document.createElement("input");
-    input.className = "score-input";
-    // `inputmode="numeric"` hides the minus key on many mobile keyboards.
-    // A text field keeps that key available; input below limits its contents to
-    // the same signed-integer range as before.
-    input.type = "text";
-    input.inputMode = "text";
-    input.pattern = "-?[0-9]*";
-    input.autocomplete = "off";
-    input.value = values[player.id] ?? "";
-    input.placeholder = "0";
-    input.disabled = locked;
-    input.setAttribute("aria-label", `Điểm của ${player.name}`);
-    if (!locked) {
-        input.addEventListener("input", () => {
-            const rawValue = input.value.replace(/[−–—]/g, "-");
-            const hasMinus = rawValue.startsWith("-");
-            const digits = rawValue.replace(/\D/g, "");
-            const normalized = hasMinus ? `-${digits}` : digits;
-            const value = normalized === "" || normalized === "-"
-                ? normalized
-                : String(Math.max(-MAX_SCORE, Math.min(MAX_SCORE, Number(normalized))));
-            if (input.value !== value) input.value = value;
-            state.draft.values[player.id] = value;
-            saveState();
-            updateDraftStatus();
-        });
-    }
-    cell.append(input);
+    const score = document.createElement("span");
+    const value = scoreValue(values[player.id]);
+    score.className = `confirmed-score ${value > 0 ? "positive" : value < 0 ? "negative" : ""}`;
+    score.textContent = displayScore(value);
+    cell.append(score);
     return cell;
-}
-
-function updateDraftStatus() {
-    const row = document.querySelector(".draft");
-    if (!row) return;
-    const total = rowTotal(state.draft.values);
-    row.classList.toggle("unbalanced", total !== 0);
-    const confirm = row.querySelector(".confirm-button");
-    confirm.disabled = total !== 0 || !rowHasScore(state.draft.values);
-    confirm.title = confirm.disabled ? "Cần một ván có tổng bằng 0" : "Xác nhận ván";
 }
 
 function createConfirmedRow(rowData) {
     const row = document.createElement("div");
     row.className = "score-row confirmed";
-    state.players.forEach((player) => row.append(createScoreCell(player, rowData.values, true)));
-    const action = document.createElement("div");
-    action.className = "score-cell confirm-cell";
-    const label = document.createElement("span");
-    label.className = "confirm-button";
-    label.textContent = "OK";
-    label.setAttribute("aria-label", "Ván đã xác nhận");
-    action.append(label);
-    row.append(action);
+    state.players.forEach((player) => row.append(createScoreCell(player, rowData.values)));
     return row;
+}
+
+function modalScoreDisplay(value) {
+    return value === "-" ? "−" : displayScore(value || 0);
+}
+
+function openRoundModal() {
+    if (roundModal) return;
+    state.draft = { values: {} };
+    saveState();
+    activePlayerId = state.players[0]?.id;
+    roundModal = document.createElement("div");
+    roundModal.className = "modal-backdrop";
+    roundModal.addEventListener("click", (event) => {
+        if (event.target === roundModal) closeRoundModal();
+    });
+    document.body.append(roundModal);
+    renderRoundModal(true);
+}
+
+function renderRoundModal(animate = false) {
+    if (!roundModal) return;
+    const total = rowTotal(state.draft.values);
+    const hasScore = rowHasScore(state.draft.values);
+    const canConfirm = total === 0 && hasScore;
+    const card = document.createElement("section");
+    card.className = `round-modal${animate ? " modal-enter" : ""}`;
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-modal", "true");
+    card.setAttribute("aria-label", "Nhập điểm ván mới");
+
+    const heading = document.createElement("h2");
+    heading.textContent = "Ván mới";
+    card.append(heading);
+
+    const totalLine = document.createElement("div");
+    totalLine.className = `modal-total ${canConfirm ? "balanced" : ""}`;
+    totalLine.innerHTML = `<span>Tổng ván</span><strong>${displayScore(total)}</strong>`;
+    card.append(totalLine);
+
+    const players = document.createElement("div");
+    players.className = "modal-players";
+    state.players.forEach((player) => {
+        const playerButton = document.createElement("button");
+        playerButton.type = "button";
+        playerButton.className = `modal-player ${player.id === activePlayerId ? "selected" : ""}`;
+        const name = document.createElement("span");
+        name.textContent = player.name;
+        const score = document.createElement("strong");
+        score.textContent = modalScoreDisplay(state.draft.values[player.id]);
+        playerButton.append(name, score);
+        playerButton.addEventListener("click", () => {
+            activePlayerId = player.id;
+            renderRoundModal();
+        });
+        players.append(playerButton);
+    });
+    card.append(players);
+
+    const keypad = document.createElement("div");
+    keypad.className = "score-keypad";
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "−", "0", "⌫"].forEach((key) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = key === "−" ? "key-minus" : key === "⌫" ? "key-delete" : "";
+        button.textContent = key;
+        button.setAttribute("aria-label", key === "−" ? "Đổi dấu âm" : key === "⌫" ? "Xóa số cuối" : `Số ${key}`);
+        button.addEventListener("click", () => updateDraftFromKey(key));
+        keypad.append(button);
+    });
+    card.append(keypad);
+
+    const actions = document.createElement("div");
+    actions.className = "modal-actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "cancel-round";
+    cancel.textContent = "Hủy";
+    cancel.addEventListener("click", closeRoundModal);
+    const confirm = document.createElement("button");
+    confirm.type = "button";
+    confirm.className = "confirm-round";
+    confirm.textContent = "OK";
+    confirm.disabled = !canConfirm;
+    confirm.addEventListener("click", confirmDraft);
+    actions.append(cancel, confirm);
+    card.append(actions);
+    roundModal.replaceChildren(card);
+}
+
+function updateDraftFromKey(key) {
+    if (!activePlayerId) return;
+    const current = String(state.draft.values[activePlayerId] ?? "");
+    let next = current;
+    if (key === "−") {
+        next = current.startsWith("-") ? current.slice(1) : current === "0" ? "-" : "-" + current.replace(/^\+/, "");
+    }
+    else if (key === "⌫") next = current.slice(0, -1);
+    else {
+        const isNegative = current.startsWith("-");
+        const digits = current.replace(/\D/g, "");
+        next = `${isNegative ? "-" : ""}${digits === "0" ? key : digits + key}`;
+    }
+    if (Math.abs(scoreValue(next)) > MAX_SCORE) return;
+    state.draft.values[activePlayerId] = next;
+    renderRoundModal();
+}
+
+function closeRoundModal() {
+    if (!roundModal) return;
+    roundModal.remove();
+    roundModal = null;
+    activePlayerId = null;
+    state.draft = { values: {} };
+    saveState();
 }
 
 function confirmDraft() {
@@ -214,6 +257,11 @@ function confirmDraft() {
     state.rows.unshift({ values, confirmedAt: new Date().toISOString() });
     state.draft = { values: {} };
     saveState();
+    if (roundModal) {
+        roundModal.remove();
+        roundModal = null;
+        activePlayerId = null;
+    }
     render();
 }
 
@@ -223,15 +271,28 @@ function addPlayer() {
     state.players.push(player);
     saveState();
     render();
+    const tableWrap = document.querySelector(".table-wrap");
+    if (tableWrap) tableWrap.scrollLeft = tableWrap.scrollWidth;
     const newName = document.querySelectorAll(".name-button")[state.players.length - 1];
     if (newName) newName.click();
 }
 
-document.querySelector("#new-session").addEventListener("click", () => {
-    if (!confirm("Xóa buổi chơi hiện tại và bắt đầu lại?")) return;
+function clearSession() {
+    if (!confirm("Clear buổi chơi và đưa danh sách về 4 mem mặc định?")) return;
+    if (roundModal) {
+        roundModal.remove();
+        roundModal = null;
+        activePlayerId = null;
+    }
     state = createSession();
     saveState();
     render();
-});
+    const tableWrap = document.querySelector(".table-wrap");
+    if (tableWrap) tableWrap.scrollLeft = 0;
+}
+
+document.querySelector("#new-round").addEventListener("click", openRoundModal);
+document.querySelector("#add-player").addEventListener("click", addPlayer);
+document.querySelector("#clear-session").addEventListener("click", clearSession);
 
 render();
