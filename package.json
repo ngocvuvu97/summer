@@ -1,0 +1,9 @@
+{
+    "name": "hand-bai",
+    "private": true,
+    "version": "1.0.0",
+    "scripts": {
+        "check": "node --check app.js",
+        "start": "npx --yes serve ."
+    }
+}
