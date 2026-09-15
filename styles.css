@@ -1,420 +1,242 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
 :root {
-    --ink: #20221f;
-    --muted: #77766d;
-    --line: #dedbd2;
-    --paper: #fbfaf7;
-    --canvas: #f1eee7;
-    --accent: #e85d3f;
-    --accent-soft: #fbe4dc;
-    --green: #386c58;
-    --green-soft: #e4efe8;
-    --shadow: 0 18px 55px rgba(47, 42, 34, .08);
+    --ink: #17233c;
+    --muted: #78829a;
+    --line: #e2e7f0;
+    --paper: #ffffff;
+    --canvas: #f4f6fb;
+    --accent: #5c50d8;
+    --accent-soft: #eeecff;
+    --green: #087b6d;
+    --green-soft: #ddf5ee;
+    --danger: #c74467;
+    --danger-soft: #fff0f3;
+    --shadow: 0 18px 48px rgba(31, 45, 77, .11);
 }
 
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
-    margin: 0;
     min-width: 320px;
+    margin: 0;
     color: var(--ink);
-    background: var(--canvas);
-    font-family: "Space Grotesk", sans-serif;
+    background: radial-gradient(circle at 92% 0%, #e6e2ff 0, transparent 31rem), var(--canvas);
+    font-family: "Plus Jakarta Sans", sans-serif;
 }
 
-button,
-input {
-    font: inherit;
-}
-
-button {
-    cursor: pointer;
-}
+button, input { font: inherit; }
+button { cursor: pointer; }
 
 .app-shell {
-    width: min(100% - 32px, 1120px);
+    width: min(100% - 32px, 860px);
     min-height: 100vh;
     margin: 0 auto;
-    padding: 42px 0 30px;
+    padding: clamp(32px, 7vw, 72px) 0 42px;
 }
 
 .app-title {
-    margin: 0 0 14px;
-    font-size: clamp(36px, 8vw, 64px);
-    letter-spacing: -.06em;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin: 0 0 16px;
+    color: var(--ink);
+    font-size: clamp(36px, 8vw, 62px);
+    font-weight: 800;
+    letter-spacing: -.075em;
     line-height: .95;
+}
+
+.app-title::before {
+    width: .7em;
+    height: .7em;
+    border-radius: 22%;
+    background: linear-gradient(135deg, #8175ff, var(--accent));
+    box-shadow: 0 7px 16px rgba(92, 80, 216, .26);
+    content: "";
 }
 
 .new-session-button {
-    margin: 0 0 28px;
-    border: 1px solid var(--ink);
-    border-radius: 5px;
-    padding: 10px 14px;
-    color: #fff;
-    background: var(--ink);
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.new-session-button:hover {
-    background: var(--green);
-}
-
-.topbar,
-.scoreboard-heading {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 24px;
-}
-
-.eyebrow,
-.section-kicker {
-    margin: 0 0 8px;
-    color: var(--accent);
-    font: 500 11px "DM Mono", monospace;
-    letter-spacing: .13em;
-}
-
-h1,
-h2,
-p {
-    margin-top: 0;
-}
-
-h1 {
-    margin-bottom: 0;
-    font-size: clamp(38px, 7vw, 72px);
-    letter-spacing: -.06em;
-    line-height: .95;
-}
-
-h2 {
-    margin-bottom: 0;
-    font-size: 18px;
-    letter-spacing: -.02em;
-}
-
-.top-actions {
-    display: flex;
-    gap: 9px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-
-.button {
-    border: 1px solid var(--line);
-    border-radius: 5px;
+    margin: 0 0 25px;
+    border: 0;
+    border-radius: 12px;
     padding: 11px 15px;
-    font-size: 13px;
-    font-weight: 600;
-    transition: transform .15s ease, background .15s ease;
-}
-
-.button:hover {
-    transform: translateY(-1px);
-}
-
-.button:focus-visible,
-.add-player:focus-visible,
-.name-button:focus-visible,
-.score-input:focus-visible {
-    outline: 3px solid rgba(232, 93, 63, .3);
-    outline-offset: 2px;
-}
-
-.button-quiet {
-    background: transparent;
-    color: var(--ink);
-}
-
-.button-quiet:hover {
-    background: rgba(255, 255, 255, .55);
-}
-
-.button-dark {
-    border-color: var(--ink);
-    background: var(--ink);
     color: #fff;
+    background: var(--ink);
+    box-shadow: 0 5px 12px rgba(23, 35, 60, .16);
+    font-size: 13px;
+    font-weight: 700;
+    transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
 }
+
+.new-session-button:hover { background: var(--accent); transform: translateY(-1px); }
+.new-session-button:active { transform: translateY(1px); box-shadow: none; }
 
 .scoreboard {
-    margin-top: 0;
     overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: 8px;
+    border: 1px solid rgba(226, 231, 240, .9);
+    border-radius: 20px;
     background: var(--paper);
     box-shadow: var(--shadow);
 }
 
-.scoreboard-heading {
-    padding: 22px 24px 19px;
-    border-bottom: 1px solid var(--line);
-}
-
-.balance-note {
-    margin: 0;
-    color: var(--muted);
-    font: 12px "DM Mono", monospace;
-}
-
-.balance-dot {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    margin-right: 7px;
-    border-radius: 50%;
-    background: var(--green);
-}
-
-.table-wrap {
-    overflow: hidden;
-}
-
-.score-table {
-    width: 100%;
-}
+.table-wrap { overflow: hidden; }
+.score-table { width: 100%; }
 
 .score-row {
     display: grid;
-    grid-template-columns: repeat(var(--players), minmax(0, 1fr)) 48px;
+    grid-template-columns: repeat(var(--players), minmax(0, 1fr)) 52px;
     border-bottom: 1px solid var(--line);
 }
 
-.score-row:last-child {
-    border-bottom: 0;
-}
+.score-row:last-child { border-bottom: 0; }
 
 .score-cell {
+    display: flex;
     min-width: 0;
-    min-height: 72px;
-    padding: 10px 6px;
+    min-height: 74px;
+    padding: 11px 8px;
     border-right: 1px solid var(--line);
 }
 
-.score-cell:last-child {
-    border-right: 0;
-}
+.score-cell:last-child { border-right: 0; }
 
 .score-header {
-    min-height: 82px;
-    padding-top: 16px;
-    background: #f5f2ec;
+    min-height: 94px;
+    padding-top: 15px;
+    color: #fff;
+    background: linear-gradient(120deg, #202d49, #17233c);
 }
 
-.cell-label {
-    color: var(--muted);
-    font: 11px "DM Mono", monospace;
-}
+.score-header .score-cell { border-color: rgba(255, 255, 255, .12); }
+.player-control { width: 100%; }
 
 .player-total {
     display: block;
-    margin-top: 7px;
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: -.04em;
+    margin-top: 8px;
+    color: #fff;
+    font: 600 18px "DM Mono", monospace;
+    letter-spacing: -.06em;
 }
 
-.player-total.negative {
-    color: var(--accent);
-}
-
-.player-total.positive {
-    color: var(--green);
-}
-
-.round-label {
-    color: var(--muted);
-    font: 12px "DM Mono", monospace;
-}
-
-.round-label strong {
-    display: block;
-    margin-top: 5px;
-    color: var(--ink);
-    font: 600 18px "Space Grotesk", sans-serif;
-}
+.player-total.negative { color: #ff9fb7; }
+.player-total.positive { color: #82e1c8; }
 
 .name-button {
     display: block;
-    max-width: 100%;
-    margin: 5px 0 0;
+    width: 100%;
+    margin: 0;
     overflow: hidden;
     border: 0;
     padding: 0;
+    color: rgba(255, 255, 255, .7);
     background: transparent;
-    color: var(--ink);
-    min-width: 0;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .025em;
     text-align: left;
     text-overflow: ellipsis;
+    text-transform: uppercase;
     white-space: nowrap;
 }
 
 .name-edit {
     width: 100%;
-    margin-top: 3px;
-    border: 1px solid var(--accent);
-    border-radius: 3px;
-    padding: 4px 5px;
+    border: 1px solid #9d96ff;
+    border-radius: 7px;
+    padding: 5px;
     color: var(--ink);
     background: #fff;
-    font-size: 13px;
+    font-size: 12px;
+    outline: 0;
 }
 
 .add-player {
     display: grid;
-    width: 34px;
-    height: 34px;
-    margin: 3px auto 0;
+    width: 31px;
+    height: 31px;
+    margin: 2px auto 0;
     place-items: center;
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    color: var(--accent);
-    background: #fff;
+    border: 1px solid rgba(255, 255, 255, .33);
+    border-radius: 10px;
+    padding: 0;
+    color: #fff;
+    background: rgba(255, 255, 255, .12);
     font-size: 22px;
     line-height: 1;
+    transition: background .15s ease, transform .15s ease;
 }
 
-.add-player:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-
-.score-row.draft {
-    background: #fff;
-}
-
-.score-row.draft.unbalanced {
-    background: var(--accent-soft);
-}
+.add-player:hover { background: var(--accent); transform: scale(1.06); }
+.score-row.draft { background: #fff; }
+.score-row.draft.unbalanced { background: var(--danger-soft); }
 
 .score-input {
+    align-self: center;
     min-width: 0;
     width: 100%;
-    height: 42px;
+    height: 45px;
     border: 1px solid transparent;
-    border-bottom-color: var(--line);
-    border-radius: 3px;
+    border-radius: 10px;
     padding: 0 3px;
     color: var(--ink);
-    background: transparent;
+    background: #f4f6fa;
     font: 500 20px "DM Mono", monospace;
+    letter-spacing: -.07em;
     text-align: center;
+    transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
 }
 
-.score-input::placeholder {
-    color: #c7c3b9;
-}
-
-.score-input:hover {
-    background: #f8f6f1;
-}
-
+.score-input::placeholder { color: #b7bfce; }
+.score-input:hover { background: #edf0f6; }
 .score-input:focus {
     border-color: var(--accent);
     background: #fff;
+    box-shadow: 0 0 0 3px rgba(92, 80, 216, .13);
     outline: 0;
 }
 
-.confirm-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+.draft.unbalanced .score-input { background: rgba(255, 255, 255, .7); }
+.confirm-cell { align-items: center; justify-content: center; }
 
 .confirm-button {
-    width: 50px;
-    border: 1px solid var(--green);
-    border-radius: 4px;
-    padding: 8px 4px;
-    color: var(--green);
-    background: var(--green-soft);
-    font: 500 12px "DM Mono", monospace;
-}
-
-.confirm-button:disabled {
-    cursor: not-allowed;
-    border-color: var(--line);
-    color: #aaa79f;
-    background: transparent;
-}
-
-.confirmed .score-cell {
-    min-height: 61px;
-}
-
-.confirmed .score-input {
+    width: 38px;
     border: 0;
-    pointer-events: none;
+    border-radius: 10px;
+    padding: 9px 2px;
+    color: #fff;
+    background: var(--green);
+    box-shadow: 0 4px 9px rgba(8, 123, 109, .18);
+    font: 500 11px "DM Mono", monospace;
+    transition: transform .15s ease, opacity .15s ease;
 }
 
-.confirmed .confirm-button {
-    border-color: transparent;
-    background: transparent;
-    color: var(--green);
-}
+.confirm-button:not(:disabled):hover { transform: translateY(-1px); }
+.confirm-button:disabled { cursor: not-allowed; color: #9ba4b4; background: #e8ebf1; box-shadow: none; }
 
-.empty-state {
-    padding: 42px 24px;
-    color: var(--muted);
-    text-align: center;
-}
+.confirmed .score-cell { min-height: 61px; }
+.confirmed .score-input { height: auto; border: 0; background: transparent; pointer-events: none; }
+.confirmed .confirm-button { color: var(--green); background: transparent; box-shadow: none; }
 
-.footer-note {
-    margin: 17px 2px 0;
-    color: var(--muted);
-    font: 11px "DM Mono", monospace;
+.new-session-button:focus-visible,
+.add-player:focus-visible,
+.name-button:focus-visible,
+.score-input:focus-visible,
+.confirm-button:focus-visible {
+    outline: 3px solid rgba(92, 80, 216, .35);
+    outline-offset: 2px;
 }
 
 @media (max-width: 620px) {
-    .app-shell {
-        width: min(100% - 20px, 1120px);
-        padding-top: 25px;
-    }
-
-    .app-title {
-        margin-bottom: 11px;
-    }
-
-    .new-session-button {
-        margin-bottom: 20px;
-    }
-
-    .topbar,
-    .scoreboard-heading {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 18px;
-    }
-
-    .top-actions {
-        width: 100%;
-        justify-content: stretch;
-    }
-
-    .top-actions .button {
-        flex: 1;
-    }
-
-    .score-cell {
-        padding-right: 4px;
-        padding-left: 4px;
-    }
-
-    .player-total {
-        font-size: 16px;
-    }
-
-    .name-button {
-        font-size: 12px;
-    }
-
-    .scoreboard-heading {
-        padding: 18px 16px 16px;
-    }
+    .app-shell { width: min(100% - 20px, 860px); padding-top: 31px; }
+    .app-title { margin-bottom: 15px; }
+    .new-session-button { margin-bottom: 20px; }
+    .scoreboard { border-radius: 16px; }
+    .score-row { grid-template-columns: repeat(var(--players), minmax(0, 1fr)) 44px; }
+    .score-cell { min-height: 70px; padding: 10px 4px; }
+    .score-header { min-height: 88px; }
+    .player-total { margin-top: 7px; font-size: 16px; }
+    .name-button { font-size: 10px; }
+    .score-input { height: 42px; font-size: 18px; }
+    .confirm-button { width: 34px; font-size: 10px; }
 }

@@ -153,18 +153,27 @@ function createScoreCell(player, values, locked) {
     cell.className = "score-cell";
     const input = document.createElement("input");
     input.className = "score-input";
-    input.type = "number";
-    input.step = "1";
-    input.min = String(-MAX_SCORE);
-    input.max = String(MAX_SCORE);
-    input.inputMode = "numeric";
+    // `inputmode="numeric"` hides the minus key on many mobile keyboards.
+    // A text field keeps that key available; input below limits its contents to
+    // the same signed-integer range as before.
+    input.type = "text";
+    input.inputMode = "text";
+    input.pattern = "-?[0-9]*";
+    input.autocomplete = "off";
     input.value = values[player.id] ?? "";
     input.placeholder = "0";
     input.disabled = locked;
     input.setAttribute("aria-label", `Điểm của ${player.name}`);
     if (!locked) {
         input.addEventListener("input", () => {
-            const value = input.value === "" ? "" : Math.max(-MAX_SCORE, Math.min(MAX_SCORE, Math.trunc(Number(input.value))));
+            const rawValue = input.value.replace(/[−–—]/g, "-");
+            const hasMinus = rawValue.startsWith("-");
+            const digits = rawValue.replace(/\D/g, "");
+            const normalized = hasMinus ? `-${digits}` : digits;
+            const value = normalized === "" || normalized === "-"
+                ? normalized
+                : String(Math.max(-MAX_SCORE, Math.min(MAX_SCORE, Number(normalized))));
+            if (input.value !== value) input.value = value;
             state.draft.values[player.id] = value;
             saveState();
             updateDraftStatus();
