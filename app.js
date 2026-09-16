@@ -1,11 +1,15 @@
 const STORAGE_KEY = "hand-bai-session-v1";
+const HISTORY_STORAGE_KEY = "hand-bai-history-v1";
 const DEFAULT_PLAYERS = ["Mem1", "Mem2", "Mem3", "Mem4"];
 const MAX_SCORE = 999;
 const PLAYER_COLUMN_MIN_WIDTH = 76;
 
 let state = loadState();
+let history = loadHistory();
+let activeHistoryId = history[0]?.id ?? null;
 let activePlayerId = null;
 let roundModal = null;
+const historyModal = document.querySelector("#history-modal");
 
 function createSession() {
     return {
@@ -37,6 +41,30 @@ function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function loadHistory() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY));
+        if (!Array.isArray(saved)) return [];
+        return saved.filter(isHistoryRecord);
+    } catch {
+        return [];
+    }
+}
+
+function saveHistory() {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+}
+
+function isHistoryRecord(record) {
+    return record
+        && typeof record === "object"
+        && typeof record.id === "string"
+        && typeof record.startedAt === "string"
+        && typeof record.savedAt === "string"
+        && Array.isArray(record.players)
+        && Array.isArray(record.rows);
+}
+
 function scoreValue(value) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
@@ -60,6 +88,18 @@ function totals() {
 function displayScore(value) {
     const number = scoreValue(value);
     return number > 0 ? `+${number}` : String(number);
+}
+
+function formatSessionDate(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Không rõ ngày";
+    return new Intl.DateTimeFormat("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    }).format(date);
 }
 
 function render() {
@@ -134,6 +174,115 @@ function createConfirmedRow(rowData) {
     row.className = "score-row confirmed";
     state.players.forEach((player) => row.append(createScoreCell(player, rowData.values)));
     return row;
+}
+
+function historyTotals(record) {
+    return record.players.reduce((result, player) => {
+        result[player.id] = record.rows.reduce((total, row) => total + scoreValue(row.values?.[player.id]), 0);
+        return result;
+    }, {});
+}
+
+function createHistoryScoreCell(player, values) {
+    const cell = document.createElement("div");
+    cell.className = "history-score-cell";
+    const value = scoreValue(values?.[player.id]);
+    cell.textContent = displayScore(value);
+    if (value > 0) cell.classList.add("positive");
+    if (value < 0) cell.classList.add("negative");
+    return cell;
+}
+
+function createHistoryTable(record) {
+    const tableWrap = document.createElement("div");
+    tableWrap.className = "history-table-wrap";
+    const table = document.createElement("div");
+    table.className = "history-table";
+    table.style.setProperty("--history-players", record.players.length);
+    table.style.setProperty("--history-table-min-width", `${record.players.length * PLAYER_COLUMN_MIN_WIDTH}px`);
+
+    const accumulated = historyTotals(record);
+    const header = document.createElement("div");
+    header.className = "history-row history-header";
+    record.players.forEach((player) => {
+        const cell = document.createElement("div");
+        cell.className = "history-player-cell";
+        const name = document.createElement("span");
+        name.textContent = player.name;
+        const total = document.createElement("strong");
+        total.textContent = displayScore(accumulated[player.id]);
+        if (accumulated[player.id] > 0) total.classList.add("positive");
+        if (accumulated[player.id] < 0) total.classList.add("negative");
+        cell.append(name, total);
+        header.append(cell);
+    });
+    table.append(header);
+    record.rows.forEach((row) => {
+        const historyRow = document.createElement("div");
+        historyRow.className = "history-row";
+        record.players.forEach((player) => historyRow.append(createHistoryScoreCell(player, row.values)));
+        table.append(historyRow);
+    });
+    tableWrap.append(table);
+    return tableWrap;
+}
+
+function renderHistory() {
+    const select = document.querySelector("#history-select");
+    const content = document.querySelector("#history-content");
+    const clearButton = document.querySelector("#clear-history");
+    const hasHistory = history.length > 0;
+    clearButton.disabled = !hasHistory;
+    select.disabled = !hasHistory;
+    select.replaceChildren();
+    content.replaceChildren();
+
+    if (!hasHistory) {
+        const option = document.createElement("option");
+        option.textContent = "Chưa có buổi chơi đã lưu";
+        select.append(option);
+        const empty = document.createElement("p");
+        empty.className = "history-empty";
+        empty.textContent = "Kết thúc buổi hiện tại để lưu lại kết quả ở đây.";
+        content.append(empty);
+        return;
+    }
+
+    if (!history.some((record) => record.id === activeHistoryId)) activeHistoryId = history[0].id;
+    history.forEach((record) => {
+        const option = document.createElement("option");
+        option.value = record.id;
+        option.textContent = formatSessionDate(record.startedAt);
+        option.selected = record.id === activeHistoryId;
+        select.append(option);
+    });
+
+    const record = history.find((item) => item.id === activeHistoryId);
+    if (!record) return;
+    const summary = document.createElement("div");
+    summary.className = "history-summary";
+    const people = document.createElement("span");
+    people.textContent = `${record.players.length} mem`;
+    const rounds = document.createElement("span");
+    rounds.textContent = `${record.rows.length} ván`;
+    summary.append(people, rounds);
+    content.append(summary, createHistoryTable(record));
+}
+
+function archiveSession() {
+    const savedAt = new Date().toISOString();
+    history.unshift({
+        id: `session-${Date.now()}`,
+        startedAt: state.createdAt,
+        savedAt,
+        players: state.players.map((player) => ({ ...player })),
+        rows: state.rows.map((row) => ({
+            values: { ...row.values },
+            confirmedAt: row.confirmedAt
+        }))
+    });
+    activeHistoryId = history[0].id;
+    saveHistory();
 }
 
 function modalScoreDisplay(value) {
@@ -278,21 +427,54 @@ function addPlayer() {
 }
 
 function clearSession() {
-    if (!confirm("Clear buổi chơi và đưa danh sách về 4 mem mặc định?")) return;
+    if (!confirm("Lưu buổi hiện tại vào lịch sử và bắt đầu buổi mới với 4 mem mặc định?")) return;
     if (roundModal) {
         roundModal.remove();
         roundModal = null;
         activePlayerId = null;
     }
+    archiveSession();
     state = createSession();
     saveState();
     render();
+    renderHistory();
     const tableWrap = document.querySelector(".table-wrap");
     if (tableWrap) tableWrap.scrollLeft = 0;
+}
+
+function clearHistory() {
+    if (!history.length || !confirm("Xóa toàn bộ lịch sử buổi chơi?")) return;
+    history = [];
+    activeHistoryId = null;
+    saveHistory();
+    renderHistory();
+}
+
+function openHistoryModal() {
+    historyModal.hidden = false;
+    renderHistory();
+}
+
+function closeHistoryModal() {
+    historyModal.hidden = true;
 }
 
 document.querySelector("#new-round").addEventListener("click", openRoundModal);
 document.querySelector("#add-player").addEventListener("click", addPlayer);
 document.querySelector("#clear-session").addEventListener("click", clearSession);
+document.querySelector("#open-history").addEventListener("click", openHistoryModal);
+document.querySelector("#close-history").addEventListener("click", closeHistoryModal);
+historyModal.addEventListener("click", (event) => {
+    if (event.target === historyModal) closeHistoryModal();
+});
+document.querySelector("#history-select").addEventListener("change", (event) => {
+    activeHistoryId = event.target.value;
+    renderHistory();
+});
+document.querySelector("#clear-history").addEventListener("click", clearHistory);
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !historyModal.hidden) closeHistoryModal();
+});
 
 render();
+renderHistory();

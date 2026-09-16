@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#17233c">
-    <title>Bảng điểm Hand bài</title>
+    <title>Summer Power</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -17,11 +17,15 @@
         <div class="action-bar" aria-label="Thao tác nhanh">
             <button class="action-button clear-session-button" id="clear-session" type="button">
                 <span class="action-icon clear-icon" aria-hidden="true"></span>
-                <span>Clear buổi chơi</span>
+                <span>Buổi mới</span>
             </button>
             <button class="action-button add-member-button" id="add-player" type="button">
                 <span class="action-icon member-icon" aria-hidden="true"></span>
                 <span>Thêm mem</span>
+            </button>
+            <button class="action-button history-button" id="open-history" type="button">
+                <span class="action-icon history-icon" aria-hidden="true"></span>
+                <span>Lịch sử</span>
             </button>
             <button class="action-button new-round-button" id="new-round" type="button">
                 <span class="action-icon plus-icon" aria-hidden="true"></span>
@@ -34,6 +38,23 @@
             </div>
         </section>
     </main>
+    <div class="modal-backdrop history-backdrop" id="history-modal" hidden>
+        <section class="history-panel" role="dialog" aria-modal="true" aria-labelledby="history-title">
+            <div class="history-panel-header">
+                <div>
+                    <p class="eyebrow">Lưu trữ</p>
+                    <h2 id="history-title">Lịch sử buổi chơi</h2>
+                </div>
+                <button class="close-history-button" id="close-history" type="button" aria-label="Đóng lịch sử"></button>
+            </div>
+            <label class="history-picker" for="history-select">
+                <span>Ngày chơi</span>
+                <select id="history-select" aria-label="Chọn ngày chơi"></select>
+            </label>
+            <div class="history-content" id="history-content" aria-live="polite"></div>
+            <button class="clear-history-button" id="clear-history" type="button">Xóa tất cả lịch sử</button>
+        </section>
+    </div>
     <script src="app.js"></script>
 </body>
 

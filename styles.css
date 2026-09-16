@@ -20,6 +20,10 @@
     box-sizing: border-box;
 }
 
+[hidden] {
+    display: none !important;
+}
+
 body {
     min-width: 320px;
     margin: 0;
@@ -29,7 +33,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
     font: inherit;
 }
 
@@ -62,7 +67,7 @@ button {
 
 .action-bar {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
     margin-bottom: 16px;
 }
@@ -147,6 +152,21 @@ button {
     transform: translateX(-50%);
 }
 
+.history-icon::before {
+    inset: 5px 6px;
+    border: 2px solid currentColor;
+    border-radius: 999px;
+}
+
+.history-icon::after {
+    top: 7px;
+    left: 11px;
+    width: 5px;
+    height: 4px;
+    border-left: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+}
+
 .action-button:hover {
     filter: saturate(1.05);
     transform: translateY(-1px);
@@ -159,19 +179,21 @@ button {
 
 .new-round-button {
     grid-column: 1 / -1;
-    min-height: 46px;
+    min-height: 52px;
     background: linear-gradient(135deg, var(--accent), #2d8b7b);
     box-shadow: 0 10px 22px rgba(92, 80, 216, .2);
 }
 
-.add-member-button {
+.add-member-button,
+.history-button {
     color: var(--ink);
     background: #fff;
     border: 1px solid var(--line);
     box-shadow: 0 8px 18px rgba(31, 45, 77, .08);
 }
 
-.add-member-button .action-icon {
+.add-member-button .action-icon,
+.history-button .action-icon {
     color: var(--accent);
     background: var(--accent-soft);
 }
@@ -194,6 +216,225 @@ button {
     border-radius: 20px;
     background: var(--paper);
     box-shadow: var(--shadow);
+}
+
+.history-panel {
+    width: min(100%, 520px);
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 18px;
+    background: #fff;
+    box-shadow: 0 24px 64px rgba(5, 11, 26, .3);
+}
+
+.history-backdrop .history-panel {
+    animation: modal-in .18s ease-out;
+}
+
+.history-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.eyebrow {
+    margin: 0 0 3px;
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.history-panel h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.close-history-button {
+    position: relative;
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    color: var(--muted);
+    background: #f1f3f8;
+}
+
+.close-history-button::before,
+.close-history-button::after {
+    position: absolute;
+    top: 17px;
+    left: 10px;
+    width: 16px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    content: "";
+}
+
+.close-history-button::before {
+    transform: rotate(45deg);
+}
+
+.close-history-button::after {
+    transform: rotate(-45deg);
+}
+
+.clear-history-button {
+    width: 100%;
+    margin-top: 14px;
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 12px;
+    color: var(--danger);
+    background: var(--danger-soft);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.clear-history-button:disabled {
+    cursor: not-allowed;
+    color: #a8afbd;
+    background: #f1f3f7;
+}
+
+.history-picker {
+    display: grid;
+    gap: 6px;
+    margin-top: 16px;
+}
+
+.history-picker > span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.history-picker select {
+    width: 100%;
+    min-height: 43px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 0 12px;
+    color: var(--ink);
+    background: #fff;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.history-picker select:disabled {
+    cursor: not-allowed;
+    color: #9ca5b4;
+    background: #f6f7fa;
+}
+
+.history-content {
+    margin-top: 14px;
+}
+
+.history-empty {
+    margin: 0;
+    border-radius: 11px;
+    padding: 14px;
+    color: var(--muted);
+    background: #f6f7fa;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.history-summary {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.history-summary span {
+    border-radius: 999px;
+    padding: 5px 8px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.history-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.history-table {
+    width: 100%;
+    min-width: var(--history-table-min-width, 100%);
+}
+
+.history-row {
+    display: grid;
+    grid-template-columns: repeat(var(--history-players), minmax(var(--player-column-min), 1fr));
+    min-width: 100%;
+    border-bottom: 1px solid var(--line);
+}
+
+.history-row:last-child {
+    border-bottom: 0;
+}
+
+.history-player-cell,
+.history-score-cell {
+    display: flex;
+    min-width: 0;
+    min-height: 53px;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 6px;
+    border-right: 1px solid var(--line);
+    font: 500 14px "DM Mono", monospace;
+    text-align: center;
+}
+
+.history-player-cell:last-child,
+.history-score-cell:last-child {
+    border-right: 0;
+}
+
+.history-header {
+    color: #fff;
+    background: #263553;
+}
+
+.history-player-cell {
+    flex-direction: column;
+    gap: 5px;
+}
+
+.history-player-cell span {
+    width: 100%;
+    overflow: hidden;
+    color: rgba(255, 255, 255, .68);
+    font: 700 10px "Plus Jakarta Sans", sans-serif;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.history-player-cell strong {
+    font: 500 16px "DM Mono", monospace;
+}
+
+.history-score-cell.positive,
+.history-player-cell .positive {
+    color: var(--green);
+}
+
+.history-score-cell.negative,
+.history-player-cell .negative {
+    color: var(--danger);
 }
 
 .table-wrap {
@@ -494,6 +735,10 @@ button {
 .new-round-button:focus-visible,
 .add-member-button:focus-visible,
 .clear-session-button:focus-visible,
+.history-button:focus-visible,
+.close-history-button:focus-visible,
+.clear-history-button:focus-visible,
+.history-picker select:focus-visible,
 .name-button:focus-visible,
 .cancel-round:focus-visible,
 .confirm-round:focus-visible,
